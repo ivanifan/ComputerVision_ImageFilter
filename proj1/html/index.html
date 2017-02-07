@@ -138,67 +138,163 @@ td img {
 
 <h2>Answered Questions</h2>
 <p>
-Put your answers to the three questions here.
+<h3>1. Explicitly describe image filtering (the input, the transformation, and the output) and why it is useful for computer vision.</h3>
+<p>
+	The inputs of image filtering are an image and a filter. The transformation process is that for each pixel in the image, its value equals to the sum of the element-wise multiplication between the filter and the submatrix of image that centers at the pixcel. The output of image filtering is the average of all the neighboring pixels weighted by the filter matrix. With imaging filtering, we can do image processing such as blurring, sharpening, edge detection, and so on.
+</p>
+<h3>2. What is the different between a high pass filter and a low pass filter in how they are constructed, and what they do to the image?</h3>
+<p>
+	High pass filter filters out low frequencies of an image while low pass filter filters out high frequencies. Low pass filter is constructed through a filter matrix that averages each pixcel with its neighbors, high pass filter is constructed by adding the differences around a pixel to that pixel. High pass filter highlights the edges of an image, while low pass filter blurs the image.</p>
+<h3>3. How does the Fourier transform relate to image filtering?</h3>
+<p>
+	Fourier transform converts an image from spatial domain to frequency domain. By examining a filter in its frequency domain, we can obtain additional insights about the filter. For example, a box filter in fourier transformation have ripples spreading out almost infinitely, while a Gaussian filter's frequency domain looks smooth; this allows us to understand why a box filter results in edgy artifacts whereas Gaussian filter gives smooth result. Another benefit of Fourier transform stems from the convolution theorem, which says "the Fourier transform of the convolution of two functions is the product of their Fourier transforms". When applying multiple filters, applying Fourier tranform to the filters and then multiply outcomes and apply inverse FFT is the same as image filtering in spatial domain but only much faster. 
+</p>
 </p>
 
 <h2>Implementation</h2>
-<div style="float: right; padding: 20px">
-<img src="placeholder.jpg" />
-<p style="font-size: 14px">Example of a right floating element.</p>
-</div>
-
-<p> 	Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
-<ol>
-<li>list element 1.</li>
-<li>list element 2.</li>
-<li>etc.</li>
-</ol>
-
-<p> 	Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
-<div style="clear:both">
-<h3>Example heading</h3>
-
-<p> 	Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
-<h2>Example of code with highlighting</h2>
-The javascript in the <code>highlighting</code> folder is configured to do syntax highlighting in code blocks such as the one below.<p>
-
+<div style="float: right; padding: 10px">
+<h3>my_imfilter Matlab implementation</h3>
 <pre><code>
-%example code
-for i = 1:length(offset)
-    source = imread(sprintf('%s/source_%02d.jpg',data_dir,i));
-    mask   = imread(sprintf('%s/mask_%02d.jpg',data_dir,i));
-    target = imread(sprintf('%s/target_%02d.jpg',data_dir,i));
+%my_imfilter code
+	[m, n] = size(filter);
+
+	if mod(n, 2) == 0 || mod(m, 2) == 0
+	    msg = 'Filter width not odd!';
+	    error(msg)
+	end
+
+	padVertical = floor(m / 2);
+	padHorizontal = floor(n / 2);
+	padImage = padarray(image, [padVertical, padHorizontal]);
+
+	filterFlip = rot90(filter, 2);
+	output = zeros(size(image, 1), size(image, 2));
+	for channel = 1 : size(image, 3)
+	    for row = 1 : size(image, 1)
+	       for col = 1 : size(image, 2)
+	          res = sum(sum(padImage(row : row + m - 1, col : col + n - 1, channel) .* filterFlip)); 
+	          output(row, col, channel) = res;
+	       end
+	    end
+	end
 
 </code></pre>
+<div style="float: right; padding: 10px">
 
-<h3>Results in a table</h3>
+</div>
+<h4>Explainantion of the implementation</h4>
+<ol>
+<li> 	First step is to get and check the filter size. I have to make sure that the filter size is odd on both dimensions, otherwise we output an error message. </li>
+<li>		Second step is to pad the original image with pixels. The number of padded pixels on pre and post the image on each dimension equals to the round down of half of the filter size on that dimension. A padarray function is used here. By not specifying the pad type, the image is padded with 0s</li>
+<li>		Third step is to apply the filter to the padImage and assign the calculation result to the final output. I decided to do convolution here because is more commonly used, so I rotate the filter by 180 degrees (actually 90 degrees twice). Then I initialize the output with 0s, and then loop through every pixel of the output in each channel assigning the results of the elmement-wise mulitplication between the filter and padImage. At the end of the loops, the image is filtered</li>
+</ol>
+
+<h4>Results of my_imfilter()</h4>
+<center><img src="identity_image.jpg"/>
+<p style="font-size: 14px">identity_image</p>
+
+<img src="blur_image.jpg"  />
+<p style="font-size: 14px">blur_image</p>
+
+<img src="large_blur_image.jpg"  />
+<p style="font-size: 14px">blur_image</p>
+<div style="clear:both">
+
+<img src="laplacian_image.jpg"  />
+<p style="font-size: 14px">laplacian_image</p>
+<div style="clear:both">
+
+<img src="sobel_image.jpg"  />
+<p style="font-size: 14px">sobel_image</p>
+<div style="clear:both">
+</center>
+
+<h3>Hybrid Image Implementation</h3>
+
+<pre><code>
+%proj1 code - hybrid image
+	low_frequencies = my_imfilter(image1, filter);
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% Remove the low frequencies from image2. The easiest way to do this is to
+	% subtract a blurred version of image2 from the original version of image2.
+	% This will give you an image centered at zero with negative values.
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	high_frequencies = image2 - my_imfilter(image2, filter);
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% Combine the high frequencies and low frequencies
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	hybrid_image = high_frequencies + low_frequencies;
+
+</code></pre>
+<h4>Explanation of Implementation</h4>
+<p> 	Low frequency image is generated by direclly applying the filter to the image. High frequency image is genereted by first applying the filter to the image and then substract the result from the original image. Hybrid image is generated by adding the high frequency and low frequency images.</p>
+
+<h4>Results of hybrid image</h4>
 
 <table border=1>
 <tr>
 <td>
-<img src="placeholder.jpg" width="24%"/>
-<img src="placeholder.jpg"  width="24%"/>
-<img src="placeholder.jpg" width="24%"/>
-<img src="placeholder.jpg" width="24%"/>
+<img src="cat.bmp" width="100%"/>
+</td>
+<td>
+<img src="high_frequencies.jpg" width="100%"/>
 </td>
 </tr>
 
 <tr>
+	<td>
+		<center>cat.bmp</center>
+	</td>
+	<td>
+		<center> high_frequencies.jpg</center>
+	</td>
+
+</tr>
+
+<tr>
 <td>
-<img src="placeholder.jpg" width="24%"/>
-<img src="placeholder.jpg"  width="24%"/>
-<img src="placeholder.jpg" width="24%"/>
-<img src="placeholder.jpg" width="24%"/>
+<img src="dog.bmp" />
 </td>
+
+<td>
+<img src="low_frequencies.jpg" />
+</td>
+</tr>
+
+<tr>
+	<td>
+		<center>dog.bmp</center>
+	</td>
+	<td>
+		<center> low_frequencies.jpg</center>
+	</td>
+
 </tr>
 
 </table>
 
+<p>
+	
+</p>
+
+<center><img src="hybrid_image.jpg"/>
+<p style="font-size: 14px">hybrid_image</p>
+
+<img src="hybrid_image_scales.jpg"  />
+<p style="font-size: 14px">hybrid_image_scales</p>
+<div style="clear:both">
+</center>
+
+
 <div style="clear:both" >
-<p> 	Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
 </div>
+
+<h3>THE END</h3>
+
 </body>
 </html>

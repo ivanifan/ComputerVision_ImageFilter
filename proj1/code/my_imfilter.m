@@ -30,20 +30,30 @@ function output = my_imfilter(image, filter)
 % output = imfilter(image, filter);
 [m, n] = size(filter);
 
-if mod(n, 2) == 0
-    msg = 'Filter width not odd!'
+if mod(n, 2) == 0 || mod(m, 2) == 0
+    msg = 'Filter width not odd!';
     error(msg)
 end
 
+padVertical = floor(m / 2);
+padHorizontal = floor(n / 2);
+padImage = padarray(image, [padVertical, padHorizontal]);
+
+filterFlip = rot90(filter, 2);
+output = zeros(size(image, 1), size(image, 2));
+for channel = 1 : size(image, 3)
+    for row = 1 : size(image, 1)
+       for col = 1 : size(image, 2)
+          res = sum(sum(padImage(row : row + m - 1, col : col + n - 1, channel) .* filterFlip)); 
+          output(row, col, channel) = res;
+       end
+    end
+end
+% output = imfilter(image, filter);
+% imshow(output)
 
 
 
-    
-
-
-%%%%%%%%%%%%%%%%
-% Your code here
-%%%%%%%%%%%%%%%%
 
 
 
